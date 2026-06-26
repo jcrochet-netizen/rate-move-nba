@@ -1,0 +1,11 @@
+# Local preview / tooling
+serve.py
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp

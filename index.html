@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note les moves NBA — BasketUSA</title>
+<style>
+  :root{
+    --busa-red:#c0392b;
+    --busa-blue:#2d83c1;
+    --ink:#0f1b2d;
+    --muted:#5f6b7a;
+    --line:#e6ebf1;
+    --soft:#f4f6f9;
+    --on-blue:#ffffff;
+    --on-blue-soft:rgba(255,255,255,.85);
+    --blue-line:rgba(255,255,255,.28);
+    --font:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);color:var(--ink);background:transparent;line-height:1.45}
+  .wrap{max-width:640px;margin:0 auto;padding:10px}
+  .card{background:var(--busa-blue);border-radius:20px;overflow:hidden}
+
+  /* Header */
+  .head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;border-top:4px solid var(--busa-red);background:rgba(255,255,255,.07)}
+  .head img{height:30px;width:auto;display:block}
+  .head .sep{width:1px;height:26px;background:var(--blue-line)}
+  .head h1{margin:0;font-size:17px;font-weight:700;color:var(--on-blue)}
+  .head p{margin:1px 0 0;font-size:13px;color:var(--on-blue-soft);font-weight:400}
+
+  /* Move rows (panneaux blancs sur le bleu) */
+  .list{padding:14px 14px 4px;display:flex;flex-direction:column;gap:9px}
+  .move{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid rgba(0,0,0,.05);border-left:3px solid var(--busa-red);border-radius:10px;padding:9px 11px}
+  .move.ext{border-left-color:#e08a2b}
+  .move .ic{width:36px;height:36px;flex:0 0 36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;background:#eaf2fb;color:#15598f}
+  .move.ext .ic{background:#fdeee7;color:#a8431f}
+  .move .body{flex:1;min-width:0}
+  .move .nm{font-size:15px;font-weight:600;line-height:1.25;color:var(--ink)}
+  .move .ac{font-size:13px;color:var(--muted);line-height:1.3;margin-top:1px}
+  .move .ac b{color:var(--ink);font-weight:600}
+  .move select{font-size:14px;font-family:var(--font);padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);min-width:66px}
+  .move select.set{border-color:var(--busa-blue);font-weight:600;color:var(--busa-blue)}
+
+  /* Buttons */
+  .actions{padding:12px 14px 18px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:11px;padding:13px 16px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:filter .15s,opacity .15s}
+  .btn-primary{background:var(--busa-red);color:#fff}
+  .btn-primary:hover{filter:brightness(1.07)}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  .btn-ghost{background:rgba(255,255,255,.14);border:1px solid var(--blue-line);color:var(--on-blue);font-weight:600}
+  .btn-ghost:hover{background:rgba(255,255,255,.24)}
+  .hint{text-align:center;font-size:12px;color:var(--on-blue-soft);margin:9px 0 0}
+
+  /* Screen 2 */
+  .screen{display:none}
+  .screen.on{display:block}
+  .recap{background:#fff;border-radius:12px;margin:0 14px 4px;padding:2px 14px}
+  .res-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .res-row:last-child{border-bottom:0}
+  .res-row .ic{width:32px;height:32px;flex:0 0 32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:#eaf2fb;color:#15598f}
+  .res-row.ext .ic{background:#fdeee7;color:#a8431f}
+  .res-main{flex:1;min-width:0}
+  .res-name{font-size:14px;font-weight:600;color:var(--ink)}
+  .res-sub{font-size:12px;color:var(--muted)}
+  .bar{height:7px;border-radius:5px;background:#eef1f5;overflow:hidden;margin-top:5px}
+  .bar > span{display:block;height:100%;background:var(--busa-blue)}
+  .res-note{flex:0 0 auto;text-align:right;min-width:74px}
+  .res-note .big{font-size:17px;font-weight:700;color:var(--ink)}
+  .res-note .you{font-size:11px;color:var(--busa-red);font-weight:600}
+  .res-note .you b{color:var(--busa-red)}
+  .section-t{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--on-blue-soft);margin:16px 14px 4px}
+  .comm-load{padding:14px;color:var(--on-blue-soft);font-size:13px;text-align:center;background:rgba(255,255,255,.08);border-radius:12px;margin:0 14px}
+  .comm-load code{background:rgba(255,255,255,.18);padding:1px 5px;border-radius:4px}
+
+  /* Share */
+  .share{display:grid;grid-template-columns:repeat(auto-fit,minmax(94px,1fr));gap:8px;padding:10px 14px 2px}
+  .sbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 8px;font-family:var(--font);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}
+  .sbtn:hover{background:var(--soft)}
+  .sbtn svg{width:16px;height:16px;display:block}
+  .copied{text-align:center;font-size:12px;color:#d6f7e0;font-weight:600;min-height:16px;margin:4px 0 0}
+  .foot{text-align:center;font-size:11px;color:rgba(255,255,255,.7);padding:12px 14px 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="card">
+
+  <div class="head">
+    <img id="logo" alt="BasketUSA">
+    <div class="sep"></div>
+    <div>
+      <h1>Note les moves NBA</h1>
+      <p>Donne ta note sur 10 à chaque trade et prolongation</p>
+    </div>
+  </div>
+
+  <!-- ÉCRAN 1 : VOTE -->
+  <div id="screen-vote" class="screen on">
+    <div id="list" class="list" style="padding-top:14px"></div>
+    <div class="actions">
+      <button id="validate" class="btn btn-primary" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Valider tes votes
+      </button>
+      <p class="hint" id="vote-hint">Note au moins un move pour valider.</p>
+    </div>
+  </div>
+
+  <!-- ÉCRAN 2 : RÉSULTATS -->
+  <div id="screen-result" class="screen">
+    <div class="section-t">Tes notes</div>
+    <div id="recap" class="recap"></div>
+
+    <div class="section-t">Les notes de la communauté</div>
+    <div id="community"><div class="comm-load">Chargement de l’avis de la communauté…</div></div>
+
+    <div class="section-t">Partage tes notes</div>
+    <div class="share">
+      <button class="sbtn" id="shX"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X</button>
+      <button class="sbtn" id="shFb"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.01 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.08 24 18.09 24 12.07z"/></svg>Facebook</button>
+      <button class="sbtn" id="shWa"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.043zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>WhatsApp</button>
+      <button class="sbtn" id="shNative" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>
+      <button class="sbtn" id="shCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copier</button>
+      <button class="sbtn" id="shImg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Image</button>
+    </div>
+    <p class="copied" id="copied"></p>
+
+    <div class="actions">
+      <button id="back" class="btn btn-ghost">Modifier mes notes</button>
+    </div>
+  </div>
+
+  <div class="foot">BasketUSA · Note les moves NBA — outil non officiel</div>
+</div>
+</div>
+
+<script>
+/* =================================================================
+   CONFIG — à personnaliser
+   ================================================================= */
+const CONFIG = {
+  shareUrl: "https://www.basketusa.com/",          // FALLBACK si l'URL de la page hôte n'est pas détectée
+  hashtags: "NBA,Mercato,BasketUSA",
+  // Endpoint Google Apps Script (collecte + stats des votes). Vide "" = écran communauté désactivé.
+  // Voir README.md → onglet Google Sheet "Votes" + script Code.gs.
+  votesUrl: "https://script.google.com/macros/s/AKfycbwB-82jcxAHfFkxiCuNm57ElDanfOlumbbHBx-aKPw5Il73ppH-RVdNK1yKGaSipU68/exec"
+};
+
+/* =================================================================
+   DONNÉES — les moves à noter (édite / ajoute librement)
+   id = identifiant stable utilisé pour agréger les votes côté Sheet.
+   type : "trade" ou "ext" (prolongation)
+   ================================================================= */
+const MOVES = [
+  { id:"giannis-mia", type:"trade", player:"Giannis Antetokounmpo", action:"Tradé au Miami Heat" },
+  { id:"reaves-lal",  type:"ext",   player:"Austin Reaves",         action:"Prolonge aux Lakers", detail:"185 M$ / 5 ans" },
+  { id:"white-cha",   type:"ext",   player:"Coby White",            action:"Prolonge aux Hornets", detail:"74 M$ / 3 ans" },
+  { id:"lamelo-min",  type:"trade", player:"LaMelo Ball",           action:"Tradé aux Minnesota Wolves" },
+  { id:"wiggins-atl", type:"trade", player:"Aaron Wiggins",         action:"Tradé aux Hawks d'Atlanta" },
+  { id:"randle-bkn",  type:"trade", player:"Julius Randle",         action:"Tradé aux Brooklyn Nets" },
+  { id:"young-was",   type:"ext",   player:"Trae Young",            action:"Prolonge aux Wizards", detail:"212 M$ / 4 ans" },
+  { id:"stewart-mem", type:"trade", player:"Isaiah Stewart",        action:"Tradé au Memphis Grizzlies" }
+];
+
+const LOGO_B64 = "data:image/png;base64,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";
+document.getElementById('logo').src = LOGO_B64;
+
+/* =================================================================
+   ÉTAT + ÉCRAN 1
+   ================================================================= */
+const $ = s => document.querySelector(s);
+const votes = {};                  // id -> note (1..10)
+
+function moveIcon(type){
+  return type==='ext'
+    ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>'
+    : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10H3l4-4"/><path d="M17 14h4l-4 4"/><path d="M3 10h14"/><path d="M21 14H7"/></svg>';
+}
+
+const list = $('#list');
+MOVES.forEach(m => {
+  const row = document.createElement('div');
+  row.className = 'move ' + (m.type==='ext'?'ext':'trade');
+  let opts = '<option value="">–/10</option>';
+  for(let i=1;i<=10;i++) opts += `<option value="${i}">${i}</option>`;
+  row.innerHTML =
+    `<div class="ic">${moveIcon(m.type)}</div>
+     <div class="body">
+       <div class="nm">${m.player}</div>
+       <div class="ac">${m.action}${m.detail?` · <b>${m.detail}</b>`:''}</div>
+     </div>
+     <select aria-label="Note pour ${m.player}">${opts}</select>`;
+  const sel = row.querySelector('select');
+  sel.addEventListener('change', () => {
+    const v = parseInt(sel.value,10);
+    if(v){ votes[m.id]=v; sel.classList.add('set'); }
+    else { delete votes[m.id]; sel.classList.remove('set'); }
+    refresh();
+  });
+  list.appendChild(row);
+});
+
+function refresh(){
+  const n = Object.keys(votes).length;
+  $('#validate').disabled = n===0;
+  $('#vote-hint').textContent = n===0
+    ? 'Note au moins un move pour valider.'
+    : `${n} move${n>1?'s':''} noté${n>1?'s':''} sur ${MOVES.length}.`;
+  postHeight();
+}
+
+/* =================================================================
+   VALIDATION → écran 2
+   ================================================================= */
+$('#validate').addEventListener('click', () => {
+  submitVotes();
+  renderRecap();
+  $('#screen-vote').classList.remove('on');
+  $('#screen-result').classList.add('on');
+  loadCommunity();
+  window.scrollTo(0,0);
+  postHeight();
+});
+$('#back').addEventListener('click', () => {
+  $('#screen-result').classList.remove('on');
+  $('#screen-vote').classList.add('on');
+  postHeight();
+});
+
+function userAvg(){
+  const ks = Object.keys(votes);
+  if(!ks.length) return 0;
+  return ks.reduce((a,k)=>a+votes[k],0)/ks.length;
+}
+
+function renderRecap(){
+  const box = $('#recap');
+  const rows = MOVES.filter(m=>votes[m.id]).map(m => `
+    <div class="res-row ${m.type==='ext'?'ext':''}">
+      <div class="ic">${moveIcon(m.type)}</div>
+      <div class="res-main">
+        <div class="res-name">${m.player}</div>
+        <div class="res-sub">${m.action}</div>
+      </div>
+      <div class="res-note"><span class="big">${votes[m.id]}</span><span style="color:#9aa6b4">/10</span></div>
+    </div>`).join('');
+  box.innerHTML = rows + `<div class="res-row" style="border-top:2px solid var(--line)">
+      <div class="res-main"><div class="res-name">Ta moyenne</div></div>
+      <div class="res-note"><span class="big" style="color:var(--busa-red)">${userAvg().toFixed(1)}</span><span style="color:#9aa6b4">/10</span></div>
+    </div>`;
+}
+
+/* =================================================================
+   VOTES COMMUNAUTÉ (Google Apps Script + Google Sheet)
+   ================================================================= */
+const VOTED_KEY = 'busaRateMoves_voted_v1';
+function submitVotes(){
+  if(!CONFIG.votesUrl) return;
+  if(localStorage.getItem(VOTED_KEY)) return;       // 1 vote par navigateur
+  const choices = MOVES.filter(m=>votes[m.id]).map(m=>({id:m.id, name:m.player, rating:votes[m.id]}));
+  if(!choices.length) return;
+  const session = 'busa-'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  try{
+    fetch(CONFIG.votesUrl, {
+      method:'POST', mode:'no-cors', keepalive:true,
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({session, choices})
+    });
+    localStorage.setItem(VOTED_KEY,'1');
+  }catch(_){}
+}
+function loadCommunity(){
+  const box = $('#community');
+  if(!CONFIG.votesUrl){
+    box.innerHTML = '<div class="comm-load">Active <code>CONFIG.votesUrl</code> (Google Apps Script) pour afficher les notes de la communauté.</div>';
+    postHeight(); return;
+  }
+  box.innerHTML = '<div class="comm-load">Chargement de l’avis de la communauté…</div>';
+  fetch(CONFIG.votesUrl + '?_=' + Date.now(), {method:'GET'})
+    .then(r=>r.json())
+    .then(renderCommunity)
+    .catch(()=>{ box.innerHTML='<div class="comm-load">Notes de la communauté indisponibles pour le moment.</div>'; postHeight(); });
+}
+function renderCommunity(data){
+  const box = $('#community');
+  const map = {};
+  (data && data.moves || []).forEach(r=>{ map[r.id] = {avg:+r.avg||0, count:+r.count||0}; });
+  const rows = MOVES.map(m => {
+    const d = map[m.id] || {avg:0,count:0};
+    return {m, avg:d.avg, count:d.count};
+  }).filter(r=>r.count>0).sort((a,b)=>b.avg-a.avg);
+  if(!rows.length){
+    box.innerHTML = '<div class="comm-load">Sois le premier à voter ! Les notes de la communauté s’afficheront ici.</div>';
+    postHeight(); return;
+  }
+  box.innerHTML = '<div class="recap">' + rows.map(r => `
+    <div class="res-row ${r.m.type==='ext'?'ext':''}">
+      <div class="ic">${moveIcon(r.m.type)}</div>
+      <div class="res-main">
+        <div class="res-name">${r.m.player}</div>
+        <div class="bar"><span style="width:${Math.round(r.avg/10*100)}%"></span></div>
+      </div>
+      <div class="res-note">
+        <span class="big">${r.avg.toFixed(1)}</span><span style="color:#9aa6b4">/10</span>
+        ${votes[r.m.id]?`<div class="you">toi <b>${votes[r.m.id]}</b></div>`:`<div class="res-sub">${r.count} vote${r.count>1?'s':''}</div>`}
+      </div>
+    </div>`).join('') + '</div>';
+  postHeight();
+}
+
+/* =================================================================
+   PARTAGE
+   ================================================================= */
+let HOST_URL='', PARENT_ORIGIN='*', gotParentUrl=false;
+try{
+  if(window.location.ancestorOrigins && window.location.ancestorOrigins.length) PARENT_ORIGIN=window.location.ancestorOrigins[0];
+  else if(document.referrer) PARENT_ORIGIN=new URL(document.referrer).origin;
+  if(document.referrer){ const r=new URL(document.referrer); if(r.origin!==location.origin) HOST_URL=document.referrer; }
+}catch(_){}
+window.addEventListener('message', e => {
+  if(e.source && e.source!==window.parent) return;
+  if(e.data && e.data.type==='busa-rate-parent-url' && typeof e.data.url==='string' && e.data.url){ HOST_URL=e.data.url; gotParentUrl=true; }
+});
+(function(){
+  if(window.parent===window) return;
+  let tries=0;
+  (function ask(){ if(gotParentUrl||tries>=10) return; tries++;
+    try{ window.parent.postMessage({type:'busa-rate-ready'}, PARENT_ORIGIN); }catch(_){}
+    setTimeout(ask,400);
+  })();
+})();
+const shareUrl = () => HOST_URL || CONFIG.shareUrl;
+function shareText(){
+  let t = `🏀 Mes notes des moves NBA sur BasketUSA !\n`;
+  MOVES.filter(m=>votes[m.id]).slice(0,4).forEach(m=>{ t += `• ${m.player} : ${votes[m.id]}/10\n`; });
+  t += `Moyenne ${userAvg().toFixed(1)}/10. Et toi, tu notes comment ? 👇`;
+  return t;
+}
+const openShare = u => window.open(u,'_blank','noopener,noreferrer');
+$('#shX').addEventListener('click', ()=>openShare(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText())}&url=${encodeURIComponent(shareUrl())}&hashtags=${encodeURIComponent(CONFIG.hashtags)}`));
+$('#shFb').addEventListener('click', ()=>openShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl())}&quote=${encodeURIComponent(shareText())}`));
+$('#shWa').addEventListener('click', ()=>openShare(`https://wa.me/?text=${encodeURIComponent(shareText()+'\n'+shareUrl())}`));
+$('#shCopy').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText(shareText()+'\n'+shareUrl()); $('#copied').textContent='✓ Texte copié !'; }
+  catch(_){ $('#copied').textContent='Copie impossible — sélectionne et copie manuellement.'; }
+  setTimeout(()=>{$('#copied').textContent='';},2500);
+});
+if(navigator.share){
+  const b=$('#shNative'); b.style.display='inline-flex';
+  b.addEventListener('click', ()=>navigator.share({title:'Note les moves NBA — BasketUSA', text:shareText(), url:shareUrl()}).catch(()=>{}));
+}
+
+/* =================================================================
+   TÉLÉCHARGER L'IMAGE DES VOTES (canvas)
+   ================================================================= */
+const FONT='system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+function rrect(ctx,x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
+function loadImg(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
+function ellipsize(ctx,t,maxW){ if(ctx.measureText(t).width<=maxW) return t; while(t.length>1 && ctx.measureText(t+'…').width>maxW) t=t.slice(0,-1); return t+'…'; }
+
+$('#shImg').addEventListener('click', async () => {
+  const btn=$('#shImg'); const old=btn.innerHTML;
+  btn.disabled=true; btn.textContent='Génération…';
+  try{
+    const picked = MOVES.filter(m=>votes[m.id]);
+    const logo = await loadImg(LOGO_B64);
+    const scale=2, W=1080, pad=56;
+    const headH=150, rowH=92, listTop=headH+44, footerH=120;
+    const H = listTop + picked.length*rowH + footerH;
+    const cv=document.createElement('canvas'); cv.width=W*scale; cv.height=H*scale;
+    const ctx=cv.getContext('2d'); ctx.scale(scale,scale);
+
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#c0392b'; ctx.fillRect(0,0,W,6);
+
+    if(logo){ const lh=46, lw=logo.width*(lh/logo.height); ctx.drawImage(logo, pad, 44, lw, lh); }
+    ctx.textAlign='left'; ctx.fillStyle='#0f1b2d'; ctx.font='700 34px '+FONT;
+    ctx.fillText('Mes notes des moves NBA', pad, 134);
+
+    let y=listTop;
+    picked.forEach(m=>{
+      ctx.save(); rrect(ctx,pad,y,W-2*pad,rowH-16,16); ctx.fillStyle='#f4f6f9'; ctx.fill(); ctx.restore();
+      const cx=pad+22, cy=y+(rowH-16)/2;
+      ctx.fillStyle = m.type==='ext' ? '#a8431f' : '#15598f';
+      ctx.font='700 13px '+FONT; ctx.fillText(m.type==='ext'?'PROLONGATION':'TRADE', cx, y+24);
+      ctx.fillStyle='#0f1b2d'; ctx.font='700 24px '+FONT;
+      ctx.fillText(ellipsize(ctx,m.player,W-2*pad-260), cx, y+50);
+      ctx.fillStyle='#5f6b7a'; ctx.font='400 16px '+FONT;
+      ctx.fillText(ellipsize(ctx,m.action+(m.detail?' · '+m.detail:''),W-2*pad-260), cx, y+rowH-30);
+      // badge note
+      const bw=110, bx=W-pad-bw-14, by=y+(rowH-16-54)/2;
+      ctx.save(); rrect(ctx,bx,by,bw,54,14); ctx.fillStyle='#2d82c2'; ctx.fill(); ctx.restore();
+      ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+      ctx.font='800 30px '+FONT; ctx.fillText(votes[m.id], bx+bw/2-14, by+37);
+      ctx.font='700 16px '+FONT; ctx.fillText('/10', bx+bw/2+26, by+35);
+      ctx.textAlign='left';
+      y+=rowH;
+    });
+
+    ctx.textAlign='left'; ctx.fillStyle='#0f1b2d'; ctx.font='700 26px '+FONT;
+    ctx.fillText('Moyenne', pad, y+44);
+    ctx.fillStyle='#c0392b'; ctx.font='800 34px '+FONT;
+    ctx.fillText(userAvg().toFixed(1)+' /10', pad+150, y+46);
+    ctx.fillStyle='#9aa6b4'; ctx.textAlign='right'; ctx.font='400 15px '+FONT;
+    ctx.fillText('basketusa.com — Note les moves NBA', W-pad, y+44);
+
+    const url = cv.toDataURL('image/png');
+    const a=document.createElement('a'); a.href=url; a.download='mes-notes-moves-nba.png'; a.click();
+  }catch(_){ alert('Impossible de générer l’image sur ce navigateur.'); }
+  finally{ btn.disabled=false; btn.innerHTML=old; }
+});
+
+/* =================================================================
+   HAUTEUR IFRAME (WordPress)
+   ================================================================= */
+function postHeight(){
+  if(window.parent===window) return;
+  const h = document.documentElement.scrollHeight;
+  try{ window.parent.postMessage({type:'busa-rate-height', height:h}, PARENT_ORIGIN); }catch(_){}
+}
+window.addEventListener('load', postHeight);
+window.addEventListener('resize', postHeight);
+refresh();
+</script>
+</body>
+</html>
