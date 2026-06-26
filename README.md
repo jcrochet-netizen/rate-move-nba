@@ -35,22 +35,48 @@ Une protection « 1 vote par navigateur » est gérée via `localStorage` (clé 
 
 ## 2. Intégrer dans WordPress (bloc HTML personnalisé)
 
-Héberge `index.html` (GitHub Pages, ou le CDN/serveur BasketUSA), puis :
+Héberge `index.html` (GitHub Pages, ou le CDN/serveur BasketUSA), puis colle ce bloc dans un
+module « HTML personnalisé ». Bonnes pratiques : origine vérifiée, `referrerpolicy`,
+`scrolling="no"` + `overflow:hidden` (pas de double-scroll mobile), `min-height` de repli
+(anti-CLS), largeur centrée.
 
 ```html
-<iframe id="busa-rate" src="https://URL-DU-WIDGET/" style="width:100%;border:0;min-height:900px"
-        loading="lazy" title="Note les moves NBA"></iframe>
+<iframe
+  id="busa-rate-moves"
+  src="https://jcrochet-netizen.github.io/rate-move-nba/"
+  title="Note les trades de la semaine en NBA — BasketUSA"
+  loading="lazy"
+  scrolling="no"
+  referrerpolicy="strict-origin-when-cross-origin"
+  style="width:100%;max-width:640px;display:block;margin:0 auto;border:0;overflow:hidden;min-height:620px;"></iframe>
+
 <script>
-window.addEventListener('message', function (e) {
-  if (e.data && e.data.type === 'busa-rate-height') {
-    document.getElementById('busa-rate').style.height = e.data.height + 'px';
-  }
-});
+(function () {
+  var ORIGIN = 'https://jcrochet-netizen.github.io';   // origine de confiance (l'hébergeur du widget)
+  var frame  = document.getElementById('busa-rate-moves');
+  window.addEventListener('message', function (e) {
+    if (e.origin !== ORIGIN) return;                   // 1) on n'accepte QUE les messages de notre widget
+    var d = e.data; if (!d) return;
+    if (d.type === 'busa-rate-height') {               // auto-resize (pas de scroll interne, pas de CLS)
+      var h = parseInt(d.height, 10);
+      if (h && h > 0) { frame = frame || document.getElementById('busa-rate-moves'); if (frame) frame.style.height = h + 'px'; }
+    }
+    if (d.type === 'busa-rate-ready' && e.source) {    // donne au widget l'URL réelle (partages précis)
+      e.source.postMessage({ type: 'busa-rate-parent-url', url: location.href }, ORIGIN);
+    }
+  }, false);
+})();
 </script>
 ```
 
-Le widget envoie sa hauteur au parent via `postMessage` (auto-resize de l'iframe) et récupère
-l'URL de la page hôte pour les partages.
+> Sécurité : le contrôle `e.origin` empêche tout autre site/script d'agir sur l'iframe ; le
+> message de hauteur ne transporte qu'un entier. `referrerpolicy="strict-origin-when-cross-origin"`
+> + la réponse `busa-rate-parent-url` permettent au widget d'utiliser l'URL exacte de la page
+> WordPress dans les partages (sinon il retombe sur `CONFIG.shareUrl`).
+
+> ⚠️ SEO : le contenu d'une iframe **n'est pas attribué** à la page WordPress par Google (il
+> appartient au domaine `github.io`). Encadre toujours l'iframe d'un vrai `H1`/`H2` et de texte
+> crawlable (présentation des trades de la semaine) pour que la page ne soit pas « vide » pour le SEO.
 
 ## 3. Personnaliser les moves
 
