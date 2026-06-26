@@ -42,6 +42,9 @@
   .move .nm{font-size:15px;font-weight:600;line-height:1.25;color:var(--ink)}
   .move .ac{font-size:13px;color:var(--muted);line-height:1.3;margin-top:1px}
   .move .ac b{color:var(--ink);font-weight:600}
+  .move .more{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:12px;font-weight:600;color:#15598f;text-decoration:none}
+  .move .more:hover{text-decoration:underline}
+  .move .more svg{width:13px;height:13px}
   .move select{font-size:14px;font-family:var(--font);padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);min-width:66px}
   .move select.set{border-color:var(--busa-blue);font-weight:600;color:var(--busa-blue)}
 
@@ -154,11 +157,11 @@ const CONFIG = {
    type : "trade" ou "ext" (prolongation)
    ================================================================= */
 const MOVES = [
-  { id:"giannis-mia", type:"trade", team:"mia", player:"Giannis Antetokounmpo", action:"Tradé au Miami Heat" },
-  { id:"lamelo-min",  type:"trade", team:"min", player:"LaMelo Ball",           action:"Tradé aux Minnesota Timberwolves" },
-  { id:"randle-bkn",  type:"trade", team:"bkn", player:"Julius Randle",         action:"Tradé aux Brooklyn Nets" },
-  { id:"herro-mil",   type:"trade", team:"mil", player:"Tyler Herro",           action:"Tradé au Milwaukee Bucks" },
-  { id:"reid-cha",    type:"trade", team:"cha", player:"Naz Reid",             action:"Tradé aux Charlotte Hornets" }
+  { id:"giannis-mia", type:"trade", team:"mia", player:"Giannis Antetokounmpo", action:"Tradé au Miami Heat",            url:"https://www.basketusa.com/news/846738/giannis-antetokounmpo-transfere-a-miami/" },
+  { id:"lamelo-min",  type:"trade", team:"min", player:"LaMelo Ball",           action:"Tradé aux Minnesota Timberwolves", url:"https://www.basketusa.com/news/847571/lamelo-ball-transfere-aux-wolves/" },
+  { id:"randle-bkn",  type:"trade", team:"bkn", player:"Julius Randle",         action:"Tradé aux Brooklyn Nets",        url:"https://www.basketusa.com/news/846712/julius-randle-transfere-chez-les-nets-nic-claxton-debarque-chez-les-bulls/" },
+  { id:"herro-mil",   type:"trade", team:"mil", player:"Tyler Herro",           action:"Tradé au Milwaukee Bucks",       url:"https://www.basketusa.com/news/846738/giannis-antetokounmpo-transfere-a-miami/" },
+  { id:"reid-cha",    type:"trade", team:"cha", player:"Naz Reid",             action:"Tradé aux Charlotte Hornets",     url:"https://www.basketusa.com/news/847571/lamelo-ball-transfere-aux-wolves/" }
 ];
 
 const LOGO_B64 = "data:image/png;base64,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";
@@ -191,6 +194,7 @@ MOVES.forEach(m => {
      <div class="body">
        <div class="nm">${m.player}</div>
        <div class="ac">${m.action}${m.detail?` · <b>${m.detail}</b>`:''}</div>
+       ${m.url?`<a class="more" href="${m.url}" target="_blank" rel="noopener">Plus d'infos sur le trade <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg></a>`:''}
      </div>
      <select aria-label="Note pour ${m.player}">${opts}</select>`;
   const sel = row.querySelector('select');
