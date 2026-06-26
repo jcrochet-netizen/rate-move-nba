@@ -23,9 +23,10 @@
   .card{background:var(--busa-blue);border-radius:20px;overflow:hidden}
 
   /* Header */
-  .head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;border-top:4px solid var(--busa-red);background:rgba(255,255,255,.07)}
-  .head img{height:28px;width:auto;display:block;background:#fff;padding:6px 10px;border-radius:9px}
-  .head .sep{width:1px;height:26px;background:var(--blue-line)}
+  .head{display:flex;align-items:center;gap:14px;flex-wrap:nowrap;padding:16px 18px;border-top:4px solid var(--busa-red);background:rgba(255,255,255,.07)}
+  .head img{height:28px;width:auto;display:block;flex:0 0 auto;background:#fff;padding:6px 10px;border-radius:9px}
+  .head .head-txt{flex:1;min-width:0}
+  .head .sep{flex:0 0 auto;width:1px;height:26px;background:var(--blue-line)}
   .head h1{margin:0;font-size:17px;font-weight:700;color:var(--on-blue)}
   .head p{margin:1px 0 0;font-size:13px;color:var(--on-blue-soft);font-weight:400}
 
@@ -91,7 +92,7 @@
   <div class="head">
     <img id="logo" alt="BasketUSA">
     <div class="sep"></div>
-    <div>
+    <div class="head-txt">
       <h1>Note les moves NBA</h1>
       <p>Donne ta note sur 10 à chaque trade et prolongation &amp; compare les à celles de la communauté BasketUSA !</p>
     </div>
